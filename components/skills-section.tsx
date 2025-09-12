@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { BookOpen, Target, Wrench, Users, Brain, Eye, Plus, Trash2 } from "lucide-react"
+import { BookOpen, Target, Wrench, Users, Brain, Eye, Plus, Trash2, Search } from "lucide-react"
 import { useState } from "react"
 
 interface SkillsSectionProps {
@@ -14,6 +14,8 @@ interface SkillsSectionProps {
 }
 
 export function SkillsSection({ character, updateCharacter }: SkillsSectionProps) {
+  const [searchTerm, setSearchTerm] = useState("")
+
   const skillCategories = [
     {
       title: "Perícias Acadêmicas",
@@ -39,7 +41,7 @@ export function SkillsSection({ character, updateCharacter }: SkillsSectionProps
         { key: "science_zoology", name: "Ciência (Zoologia)", base: 1 },
         { key: "law", name: "Direito", base: 5 },
         { key: "accounting", name: "Contabilidade", base: 5 },
-        { key: "knowledge_cthulhu_mythos", name: "Mythos de Cthulhu", base: 0 },
+        { key: "knowledge_cthulhu_mythos", name: "Mythos de Cthulhu", base: 0, usesSanity: true },
       ],
     },
     {
@@ -142,6 +144,21 @@ export function SkillsSection({ character, updateCharacter }: SkillsSectionProps
 
   const customSkills = character.customSkills || []
 
+  const filterSkills = (skills: any[]) => {
+    if (!searchTerm.trim()) return skills
+    return skills.filter((skill) => skill.name.toLowerCase().includes(searchTerm.toLowerCase()))
+  }
+
+  const filterCategories = (categories: any[]) => {
+    if (!searchTerm.trim()) return categories
+    return categories.filter((category) => filterSkills(category.skills).length > 0)
+  }
+
+  const filterCustomSkills = (skills: any[]) => {
+    if (!searchTerm.trim()) return skills
+    return skills.filter((skill) => skill.name.toLowerCase().includes(searchTerm.toLowerCase()))
+  }
+
   const addCustomSkill = () => {
     if (newCustomSkill.name.trim()) {
       const updatedCustomSkills = [
@@ -172,9 +189,29 @@ export function SkillsSection({ character, updateCharacter }: SkillsSectionProps
   const getHalfValue = (value: number) => Math.floor(value / 2)
   const getFifthValue = (value: number) => Math.floor(value / 5)
 
+  const filteredCategories = filterCategories(skillCategories)
+  const filteredCustomSkills = filterCustomSkills(customSkills)
+
   return (
     <div className="space-y-8">
-      {skillCategories.map(({ title, icon: Icon, skills }) => (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-3 text-2xl">
+            <Search className="w-6 h-6" />
+            Buscar Perícias
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Input
+            placeholder="Digite o nome da perícia para filtrar..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="text-lg"
+          />
+        </CardContent>
+      </Card>
+
+      {filteredCategories.map(({ title, icon: Icon, skills }) => (
         <Card key={title}>
           <CardHeader>
             <CardTitle className="flex items-center gap-3 text-2xl">
@@ -184,24 +221,33 @@ export function SkillsSection({ character, updateCharacter }: SkillsSectionProps
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {skills.map(({ key, name, base }) => {
-                const value = character[key] || base
+              {filterSkills(skills).map(({ key, name, base, usesSanity }) => {
+                const value = usesSanity ? character.sanity || base : character[key] || base
                 return (
                   <div key={key} className="space-y-3 p-4 rounded-lg bg-muted/30 border border-border/50">
                     <div className="flex items-center justify-between">
                       <Label className="text-lg font-bold text-foreground">{name}</Label>
-                      <Badge variant="outline" className="text-base font-semibold px-3 py-1">
-                        Base: {base}%
-                      </Badge>
+                      <div className="flex gap-2">
+                        <Badge variant="outline" className="text-base font-semibold px-3 py-1">
+                          Base: {base}%
+                        </Badge>
+                        {usesSanity && (
+                          <Badge variant="secondary" className="text-sm px-2 py-1">
+                            = Sanidade
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                     <div className="flex items-center gap-3">
                       <Input
                         type="number"
                         value={value}
-                        onChange={(e) => updateCharacter(key, Number.parseInt(e.target.value) || base)}
-                        className="text-center font-mono text-2xl font-bold h-14 border-2"
+                        onChange={(e) => !usesSanity && updateCharacter(key, Number.parseInt(e.target.value) || base)}
+                        className={`text-center font-mono text-2xl font-bold h-14 border-2 ${usesSanity ? "bg-muted cursor-not-allowed" : ""}`}
                         min={base}
                         max="100"
+                        disabled={usesSanity}
+                        title={usesSanity ? "Esta perícia usa o mesmo valor da Sanidade" : ""}
                       />
                       <div className="flex flex-col gap-2">
                         <Badge variant="secondary" className="text-base font-bold px-3 py-2">
@@ -220,82 +266,88 @@ export function SkillsSection({ character, updateCharacter }: SkillsSectionProps
         </Card>
       ))}
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-3 text-2xl">
-            <Plus className="w-6 h-6" />
-            Perícias Personalizadas
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            {/* Formulário para adicionar nova perícia */}
-            <div className="flex gap-3 p-4 rounded-lg bg-muted/30 border border-border/50">
-              <Input
-                placeholder="Nome da perícia (ex: Ofício - Carpintaria)"
-                value={newCustomSkill.name}
-                onChange={(e) => setNewCustomSkill({ ...newCustomSkill, name: e.target.value })}
-                className="flex-1"
-              />
-              <Input
-                type="number"
-                placeholder="Valor base"
-                value={newCustomSkill.value}
-                onChange={(e) => setNewCustomSkill({ ...newCustomSkill, value: Number.parseInt(e.target.value) || 0 })}
-                className="w-24"
-                min="0"
-                max="100"
-              />
-              <Button onClick={addCustomSkill} size="sm">
-                <Plus className="w-4 h-4" />
-              </Button>
-            </div>
+      {(filteredCustomSkills.length > 0 || !searchTerm.trim()) && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-3 text-2xl">
+              <Plus className="w-6 h-6" />
+              Perícias Personalizadas
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              {/* Formulário para adicionar nova perícia */}
+              {!searchTerm.trim() && (
+                <div className="flex gap-3 p-4 rounded-lg bg-muted/30 border border-border/50">
+                  <Input
+                    placeholder="Nome da perícia (ex: Ofício - Carpintaria)"
+                    value={newCustomSkill.name}
+                    onChange={(e) => setNewCustomSkill({ ...newCustomSkill, name: e.target.value })}
+                    className="flex-1"
+                  />
+                  <Input
+                    type="number"
+                    placeholder="Valor base"
+                    value={newCustomSkill.value}
+                    onChange={(e) =>
+                      setNewCustomSkill({ ...newCustomSkill, value: Number.parseInt(e.target.value) || 0 })
+                    }
+                    className="w-24"
+                    min="0"
+                    max="100"
+                  />
+                  <Button onClick={addCustomSkill} size="sm">
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
 
-            {/* Lista de perícias personalizadas */}
-            {customSkills.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {customSkills.map((skill: any) => (
-                  <div key={skill.id} className="space-y-3 p-4 rounded-lg bg-muted/30 border border-border/50">
-                    <div className="flex items-center justify-between">
-                      <Input
-                        value={skill.name}
-                        onChange={(e) => updateCustomSkill(skill.id, "name", e.target.value)}
-                        className="font-bold text-foreground bg-transparent border-none p-0 h-auto"
-                      />
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeCustomSkill(skill.id)}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Input
-                        type="number"
-                        value={skill.value}
-                        onChange={(e) => updateCustomSkill(skill.id, "value", Number.parseInt(e.target.value) || 0)}
-                        className="text-center font-mono text-2xl font-bold h-14 border-2"
-                        min="0"
-                        max="100"
-                      />
-                      <div className="flex flex-col gap-2">
-                        <Badge variant="secondary" className="text-base font-bold px-3 py-2">
-                          ½: {getHalfValue(skill.value)}
-                        </Badge>
-                        <Badge variant="outline" className="text-base font-bold px-3 py-2">
-                          ⅕: {getFifthValue(skill.value)}
-                        </Badge>
+              {/* Lista de perícias personalizadas */}
+              {filteredCustomSkills.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {filteredCustomSkills.map((skill: any) => (
+                    <div key={skill.id} className="space-y-3 p-4 rounded-lg bg-muted/30 border border-border/50">
+                      <div className="flex items-center justify-between">
+                        <Input
+                          value={skill.name}
+                          onChange={(e) => updateCustomSkill(skill.id, "name", e.target.value)}
+                          className="font-bold text-foreground bg-transparent border-none p-0 h-auto"
+                        />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeCustomSkill(skill.id)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Input
+                          type="number"
+                          value={skill.value}
+                          onChange={(e) => updateCustomSkill(skill.id, "value", Number.parseInt(e.target.value) || 0)}
+                          className="text-center font-mono text-2xl font-bold h-14 border-2"
+                          min="0"
+                          max="100"
+                        />
+                        <div className="flex flex-col gap-2">
+                          <Badge variant="secondary" className="text-base font-bold px-3 py-2">
+                            ½: {getHalfValue(skill.value)}
+                          </Badge>
+                          <Badge variant="outline" className="text-base font-bold px-3 py-2">
+                            ⅕: {getFifthValue(skill.value)}
+                          </Badge>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }
