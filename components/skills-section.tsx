@@ -7,14 +7,22 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { BookOpen, Target, Wrench, Users, Brain, Eye, Plus, Trash2, Search } from "lucide-react"
 import { useState } from "react"
+import { WaveText } from "@/components/wave-text"
 
 interface SkillsSectionProps {
   character: any
   updateCharacter: (field: string, value: string | number) => void
+  insanityLevel: number
+  waveEnabled?: boolean
 }
 
-export function SkillsSection({ character, updateCharacter }: SkillsSectionProps) {
+export function SkillsSection({ character, updateCharacter, insanityLevel, waveEnabled = true }: SkillsSectionProps) {
   const [searchTerm, setSearchTerm] = useState("")
+
+  const updateMythos = (value: number) => {
+    updateCharacter("mythosCthulhu", value)
+    updateCharacter("knowledge_cthulhu_mythos", value)
+  }
 
   const skillCategories = [
     {
@@ -41,7 +49,7 @@ export function SkillsSection({ character, updateCharacter }: SkillsSectionProps
         { key: "science_zoology", name: "Ciência (Zoologia)", base: 1 },
         { key: "law", name: "Direito", base: 5 },
         { key: "accounting", name: "Contabilidade", base: 5 },
-        { key: "knowledge_cthulhu_mythos", name: "Mythos de Cthulhu", base: 0, usesSanity: true },
+        { key: "knowledge_cthulhu_mythos", name: "Mythos de Cthulhu", base: 0, isMythos: true },
       ],
     },
     {
@@ -198,7 +206,9 @@ export function SkillsSection({ character, updateCharacter }: SkillsSectionProps
         <CardHeader>
           <CardTitle className="flex items-center gap-3 text-2xl">
             <Search className="w-6 h-6" />
-            Buscar Perícias
+            <WaveText insanityLevel={insanityLevel} waveEnabled={waveEnabled}>
+              Buscar Perícias
+            </WaveText>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -216,24 +226,34 @@ export function SkillsSection({ character, updateCharacter }: SkillsSectionProps
           <CardHeader>
             <CardTitle className="flex items-center gap-3 text-2xl">
               <Icon className="w-6 h-6" />
-              {title}
+              <WaveText insanityLevel={insanityLevel} waveEnabled={waveEnabled}>
+                {title}
+              </WaveText>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {filterSkills(skills).map(({ key, name, base, usesSanity }) => {
-                const value = usesSanity ? character.sanity || base : character[key] || base
+              {filterSkills(skills).map(({ key, name, base, isMythos }) => {
+                const value = character[key] || base
                 return (
                   <div key={key} className="space-y-3 p-4 rounded-lg bg-muted/30 border border-border/50">
                     <div className="flex items-center justify-between">
-                      <Label className="text-lg font-bold text-foreground">{name}</Label>
+                      <Label className="text-lg font-bold text-foreground">
+                        <WaveText insanityLevel={insanityLevel} waveEnabled={waveEnabled}>
+                          {name}
+                        </WaveText>
+                      </Label>
                       <div className="flex gap-2">
                         <Badge variant="outline" className="text-base font-semibold px-3 py-1">
-                          Base: {base}%
+                          <WaveText insanityLevel={insanityLevel} waveEnabled={waveEnabled}>
+                            Base: {base}%
+                          </WaveText>
                         </Badge>
-                        {usesSanity && (
-                          <Badge variant="secondary" className="text-sm px-2 py-1">
-                            = Sanidade
+                        {isMythos && (
+                          <Badge variant="destructive" className="text-sm px-2 py-1">
+                            <WaveText insanityLevel={insanityLevel} waveEnabled={waveEnabled}>
+                              Especial
+                            </WaveText>
                           </Badge>
                         )}
                       </div>
@@ -242,12 +262,17 @@ export function SkillsSection({ character, updateCharacter }: SkillsSectionProps
                       <Input
                         type="number"
                         value={value}
-                        onChange={(e) => !usesSanity && updateCharacter(key, Number.parseInt(e.target.value) || base)}
-                        className={`text-center font-mono text-2xl font-bold h-14 border-2 ${usesSanity ? "bg-muted cursor-not-allowed" : ""}`}
+                        onChange={(e) => {
+                          const newValue = Number.parseInt(e.target.value) || base
+                          if (isMythos) {
+                            updateMythos(newValue)
+                          } else {
+                            updateCharacter(key, newValue)
+                          }
+                        }}
+                        className="text-center font-mono text-2xl font-bold h-14 border-2"
                         min={base}
                         max="100"
-                        disabled={usesSanity}
-                        title={usesSanity ? "Esta perícia usa o mesmo valor da Sanidade" : ""}
                       />
                       <div className="flex flex-col gap-2">
                         <Badge variant="secondary" className="text-base font-bold px-3 py-2">
@@ -271,12 +296,13 @@ export function SkillsSection({ character, updateCharacter }: SkillsSectionProps
           <CardHeader>
             <CardTitle className="flex items-center gap-3 text-2xl">
               <Plus className="w-6 h-6" />
-              Perícias Personalizadas
+              <WaveText insanityLevel={insanityLevel} waveEnabled={waveEnabled}>
+                Perícias Personalizadas
+              </WaveText>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              {/* Formulário para adicionar nova perícia */}
               {!searchTerm.trim() && (
                 <div className="flex gap-3 p-4 rounded-lg bg-muted/30 border border-border/50">
                   <Input
@@ -302,7 +328,6 @@ export function SkillsSection({ character, updateCharacter }: SkillsSectionProps
                 </div>
               )}
 
-              {/* Lista de perícias personalizadas */}
               {filteredCustomSkills.length > 0 && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {filteredCustomSkills.map((skill: any) => (

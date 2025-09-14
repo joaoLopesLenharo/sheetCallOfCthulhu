@@ -400,6 +400,13 @@ export function useCharacterStorage() {
   const updateCharacter = useCallback((field: string, value: string | number | undefined) => {
     setCharacter((prev) => {
       const updated = { ...prev, [field]: value }
+
+      if (field === "mythosCthulhu") {
+        updated.knowledge_cthulhu_mythos = value as number
+      } else if (field === "knowledge_cthulhu_mythos") {
+        updated.mythosCthulhu = value as number
+      }
+
       const derivedValues = calculateDerivedValues(updated)
       const newCharacter = { ...updated, ...derivedValues }
 
@@ -555,11 +562,27 @@ export function useCharacterStorage() {
     }
   }, [])
 
+  const saveCharacter = useCallback(async () => {
+    return new Promise<void>((resolve, reject) => {
+      try {
+        if (typeof window !== "undefined") {
+          localStorage.setItem("cthulhu-character", JSON.stringify(character))
+          resolve()
+        } else {
+          reject(new Error("Ambiente não suporta localStorage"))
+        }
+      } catch (error) {
+        reject(error)
+      }
+    })
+  }, [character])
+
   return {
     character,
     updateCharacter,
     exportCharacter,
     importCharacter,
     resetCharacter,
+    saveCharacter, // Exportando nova função
   }
 }

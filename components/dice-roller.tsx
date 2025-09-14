@@ -7,8 +7,14 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Dice1, Dice2, Dice3, Dice4, Dice5, Dice6, RotateCcw } from "lucide-react"
 import { useState } from "react"
+import { WaveText } from "./wave-text"
 
-export function DiceRoller() {
+interface DiceRollerProps {
+  insanityLevel?: number
+  waveEnabled?: boolean
+}
+
+export function DiceRoller({ insanityLevel = 0, waveEnabled = true }: DiceRollerProps) {
   const [rollResult, setRollResult] = useState<number | null>(null)
   const [skillValue, setSkillValue] = useState(50)
   const [lastRoll, setLastRoll] = useState<{
@@ -71,13 +77,19 @@ export function DiceRoller() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <RotateCcw className="w-5 h-5" />
-          Rolagem de Dados
+          <WaveText insanityLevel={insanityLevel} waveEnabled={waveEnabled}>
+            Rolagem de Dados
+          </WaveText>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Teste de Perícia */}
         <div className="space-y-2">
-          <Label htmlFor="skillValue">Valor da Perícia</Label>
+          <Label htmlFor="skillValue">
+            <WaveText insanityLevel={insanityLevel} waveEnabled={waveEnabled}>
+              Valor da Perícia
+            </WaveText>
+          </Label>
           <Input
             id="skillValue"
             type="number"
@@ -88,13 +100,19 @@ export function DiceRoller() {
             className="text-center text-lg font-mono"
           />
           <Button onClick={rollD100} className="w-full" variant="default">
-            Rolar d100
+            <WaveText insanityLevel={insanityLevel} waveEnabled={waveEnabled}>
+              Rolar d100
+            </WaveText>
           </Button>
         </div>
 
         {/* Outros Dados */}
         <div className="space-y-2">
-          <Label>Outros Dados</Label>
+          <Label>
+            <WaveText insanityLevel={insanityLevel} waveEnabled={waveEnabled}>
+              Outros Dados
+            </WaveText>
+          </Label>
           <div className="grid grid-cols-3 gap-2">
             {[4, 6, 8, 10, 12, 20].map((sides) => (
               <Button
@@ -104,7 +122,10 @@ export function DiceRoller() {
                 size="sm"
                 className="flex items-center gap-1"
               >
-                {getDiceIcon(sides)}d{sides}
+                {getDiceIcon(sides)}
+                <WaveText insanityLevel={insanityLevel} waveEnabled={waveEnabled}>
+                  d{sides}
+                </WaveText>
               </Button>
             ))}
           </div>
@@ -114,30 +135,76 @@ export function DiceRoller() {
         {rollResult !== null && (
           <div className="text-center space-y-2">
             <div className="text-4xl font-bold font-mono">{rollResult}</div>
-            {lastRoll && <Badge className={`${lastRoll.color} text-white text-base`}>{lastRoll.success}</Badge>}
+            {lastRoll && (
+              <Badge className={`${lastRoll.color} text-white text-base`}>
+                <WaveText insanityLevel={insanityLevel} waveEnabled={waveEnabled}>
+                  {lastRoll.success}
+                </WaveText>
+              </Badge>
+            )}
           </div>
         )}
 
         <div className="text-sm text-muted-foreground space-y-2 bg-muted/50 p-3 rounded-lg">
           <div className="flex justify-between font-medium">
-            <span>Crítico:</span>
-            <span>01</span>
+            <span>
+              <WaveText insanityLevel={insanityLevel} waveEnabled={waveEnabled}>
+                Crítico:
+              </WaveText>
+            </span>
+            <span>
+              <WaveText insanityLevel={insanityLevel} waveEnabled={waveEnabled}>
+                01
+              </WaveText>
+            </span>
           </div>
           <div className="flex justify-between font-medium">
-            <span>Extremo:</span>
-            <span>≤ {Math.floor(skillValue / 5)}</span>
+            <span>
+              <WaveText insanityLevel={insanityLevel} waveEnabled={waveEnabled}>
+                Extremo:
+              </WaveText>
+            </span>
+            <span>
+              <WaveText insanityLevel={insanityLevel} waveEnabled={waveEnabled}>
+                ≤ {Math.floor(skillValue / 5)}
+              </WaveText>
+            </span>
           </div>
           <div className="flex justify-between font-medium">
-            <span>Sólido:</span>
-            <span>≤ {Math.floor(skillValue / 2)}</span>
+            <span>
+              <WaveText insanityLevel={insanityLevel} waveEnabled={waveEnabled}>
+                Sólido:
+              </WaveText>
+            </span>
+            <span>
+              <WaveText insanityLevel={insanityLevel} waveEnabled={waveEnabled}>
+                ≤ {Math.floor(skillValue / 2)}
+              </WaveText>
+            </span>
           </div>
           <div className="flex justify-between font-medium">
-            <span>Regular:</span>
-            <span>≤ {skillValue}</span>
+            <span>
+              <WaveText insanityLevel={insanityLevel} waveEnabled={waveEnabled}>
+                Regular:
+              </WaveText>
+            </span>
+            <span>
+              <WaveText insanityLevel={insanityLevel} waveEnabled={waveEnabled}>
+                ≤ {skillValue}
+              </WaveText>
+            </span>
           </div>
           <div className="flex justify-between font-medium">
-            <span>Desastre:</span>
-            <span>96+</span>
+            <span>
+              <WaveText insanityLevel={insanityLevel} waveEnabled={waveEnabled}>
+                Desastre:
+              </WaveText>
+            </span>
+            <span>
+              <WaveText insanityLevel={insanityLevel} waveEnabled={waveEnabled}>
+                96+
+              </WaveText>
+            </span>
           </div>
         </div>
       </CardContent>

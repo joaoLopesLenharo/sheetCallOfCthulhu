@@ -8,15 +8,19 @@ import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
 import { Brain, Minus, Plus, Dice6 } from "lucide-react"
 import { useState } from "react"
+import { WaveText } from "./wave-text"
 
 interface SanityProps {
   character: any
   updateCharacter: (field: string, value: any) => void
+  insanityLevel: number
+  waveEnabled: boolean // Added waveEnabled prop
 }
 
-export function SanitySection({ character, updateCharacter }: SanityProps) {
+export function SanitySection({ character, updateCharacter, insanityLevel, waveEnabled }: SanityProps) {
   const [sanityLoss, setSanityLoss] = useState("")
   const [sanityGain, setSanityGain] = useState("")
+  const [lastRoll, setLastRoll] = useState<any>(null)
 
   const applySanityLoss = () => {
     const loss = Number.parseInt(sanityLoss) || 0
@@ -70,11 +74,14 @@ export function SanitySection({ character, updateCharacter }: SanityProps) {
     }
   }
 
-  const [lastRoll, setLastRoll] = useState<any>(null)
-
   const handleSanityRoll = () => {
     const result = rollSanityCheck()
     setLastRoll(result)
+  }
+
+  const handleSanityChange = (value: number) => {
+    const clampedValue = Math.min(Math.max(0, value), character.maxSanity)
+    updateCharacter("sanity", clampedValue)
   }
 
   return (
@@ -82,43 +89,60 @@ export function SanitySection({ character, updateCharacter }: SanityProps) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Brain className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-          Sistema de Sanidade
+          <WaveText insanityLevel={insanityLevel} waveEnabled={waveEnabled}>
+            Sistema de Sanidade
+          </WaveText>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Status Atual */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <div>
-            <Label htmlFor="currentSanity">Sanidade Atual</Label>
+            <Label htmlFor="currentSanity">
+              <WaveText insanityLevel={insanityLevel} waveEnabled={waveEnabled}>
+                Sanidade Atual
+              </WaveText>
+            </Label>
             <div className="flex items-center gap-2 mt-1">
               <Input
                 id="currentSanity"
                 type="number"
                 value={character.sanity}
-                onChange={(e) => updateCharacter("sanity", Number.parseInt(e.target.value) || 0)}
+                onChange={(e) => handleSanityChange(Number.parseInt(e.target.value) || 0)}
                 className="transition-colors duration-300"
+                min="0"
+                max={character.maxSanity}
               />
               <Badge variant="outline" className="text-xs">
-                /{character.maxSanity}
+                <WaveText insanityLevel={insanityLevel} waveEnabled={waveEnabled}>
+                  /{character.maxSanity}
+                </WaveText>
               </Badge>
             </div>
           </div>
-          <div>
-            <Label htmlFor="mythosCthulhu">Mythos de Cthulhu</Label>
-            <Input
-              id="mythosCthulhu"
-              type="number"
-              value={character.mythosCthulhu || 0}
-              onChange={(e) => updateCharacter("mythosCthulhu", Number.parseInt(e.target.value) || 0)}
-              className="mt-1 transition-colors duration-300"
-            />
+
+          <div className="text-sm text-muted-foreground bg-muted/30 p-3 rounded-lg">
+            <p className="font-medium">
+              <WaveText insanityLevel={insanityLevel} waveEnabled={waveEnabled}>
+                Valor atual de Mythos: {character.mythosCthulhu || 0}
+              </WaveText>
+            </p>
+            <p className="text-xs mt-1">
+              <WaveText insanityLevel={insanityLevel} waveEnabled={waveEnabled}>
+                Este valor é editável apenas na aba de Perícias
+              </WaveText>
+            </p>
           </div>
         </div>
 
         {/* Insanidade */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="temporaryInsanity">Insanidade Temporária</Label>
+            <Label htmlFor="temporaryInsanity">
+              <WaveText insanityLevel={insanityLevel} waveEnabled={waveEnabled}>
+                Insanidade Temporária
+              </WaveText>
+            </Label>
             <Input
               id="temporaryInsanity"
               type="number"
@@ -128,7 +152,11 @@ export function SanitySection({ character, updateCharacter }: SanityProps) {
             />
           </div>
           <div>
-            <Label htmlFor="indefiniteInsanity">Insanidade Indefinida</Label>
+            <Label htmlFor="indefiniteInsanity">
+              <WaveText insanityLevel={insanityLevel} waveEnabled={waveEnabled}>
+                Insanidade Indefinida
+              </WaveText>
+            </Label>
             <Input
               id="indefiniteInsanity"
               type="number"
@@ -151,7 +179,9 @@ export function SanitySection({ character, updateCharacter }: SanityProps) {
             />
             <Button onClick={applySanityLoss} variant="destructive" size="sm">
               <Minus className="w-4 h-4 mr-1" />
-              Perder Sanidade
+              <WaveText insanityLevel={insanityLevel} waveEnabled={waveEnabled}>
+                Perder Sanidade
+              </WaveText>
             </Button>
 
             <Input
@@ -163,18 +193,24 @@ export function SanitySection({ character, updateCharacter }: SanityProps) {
             />
             <Button onClick={applySanityGain} variant="default" size="sm">
               <Plus className="w-4 h-4 mr-1" />
-              Recuperar
+              <WaveText insanityLevel={insanityLevel} waveEnabled={waveEnabled}>
+                Recuperar
+              </WaveText>
             </Button>
           </div>
 
           <div className="flex items-center gap-2">
             <Button onClick={handleSanityRoll} variant="outline" size="sm">
               <Dice6 className="w-4 h-4 mr-1" />
-              Teste de Sanidade
+              <WaveText insanityLevel={insanityLevel} waveEnabled={waveEnabled}>
+                Teste de Sanidade
+              </WaveText>
             </Button>
             {lastRoll && (
               <Badge variant={lastRoll.success ? "default" : "destructive"}>
-                {lastRoll.roll} - {lastRoll.level} ({lastRoll.success ? "Sucesso" : "Falha"})
+                <WaveText insanityLevel={insanityLevel} waveEnabled={waveEnabled}>
+                  {lastRoll.roll} - {lastRoll.level} ({lastRoll.success ? "Sucesso" : "Falha"})
+                </WaveText>
               </Badge>
             )}
           </div>
@@ -182,7 +218,11 @@ export function SanitySection({ character, updateCharacter }: SanityProps) {
 
         {/* Fobias e Manias */}
         <div>
-          <Label htmlFor="phobiasManias">Fobias & Manias</Label>
+          <Label htmlFor="phobiasManias">
+            <WaveText insanityLevel={insanityLevel} waveEnabled={waveEnabled}>
+              Fobias & Manias
+            </WaveText>
+          </Label>
           <Textarea
             id="phobiasManias"
             value={character.phobiasManias || ""}
@@ -196,7 +236,11 @@ export function SanitySection({ character, updateCharacter }: SanityProps) {
         {/* Indicadores Visuais */}
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
-            <span>Estado Mental:</span>
+            <span>
+              <WaveText insanityLevel={insanityLevel} waveEnabled={waveEnabled}>
+                Estado Mental:
+              </WaveText>
+            </span>
             <Badge
               variant={
                 character.sanity <= Math.floor(character.maxSanity / 5)
@@ -206,11 +250,13 @@ export function SanitySection({ character, updateCharacter }: SanityProps) {
                     : "default"
               }
             >
-              {character.sanity <= Math.floor(character.maxSanity / 5)
-                ? "Insano"
-                : character.sanity <= Math.floor(character.maxSanity / 2)
-                  ? "Perturbado"
-                  : "Estável"}
+              <WaveText insanityLevel={insanityLevel} waveEnabled={waveEnabled}>
+                {character.sanity <= Math.floor(character.maxSanity / 5)
+                  ? "Insano"
+                  : character.sanity <= Math.floor(character.maxSanity / 2)
+                    ? "Perturbado"
+                    : "Estável"}
+              </WaveText>
             </Badge>
           </div>
 
@@ -231,13 +277,19 @@ export function SanitySection({ character, updateCharacter }: SanityProps) {
         {/* Referências */}
         <div className="text-xs text-muted-foreground space-y-1">
           <p>
-            <strong>Insanidade Temporária:</strong> Perda de 5+ pontos de uma vez
+            <WaveText insanityLevel={insanityLevel} waveEnabled={waveEnabled}>
+              <strong>Insanidade Temporária:</strong> Perda de 5+ pontos de uma vez
+            </WaveText>
           </p>
           <p>
-            <strong>Insanidade Indefinida:</strong> Sanidade cai para 1/5 do máximo ou menos
+            <WaveText insanityLevel={insanityLevel} waveEnabled={waveEnabled}>
+              <strong>Insanidade Indefinida:</strong> Sanidade cai para 1/5 do máximo ou menos
+            </WaveText>
           </p>
           <p>
-            <strong>Mythos:</strong> Conhecimento proibido que reduz sanidade máxima
+            <WaveText insanityLevel={insanityLevel} waveEnabled={waveEnabled}>
+              <strong>Mythos:</strong> Conhecimento proibido que reduz sanidade máxima
+            </WaveText>
           </p>
         </div>
       </CardContent>
